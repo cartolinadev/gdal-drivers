@@ -539,10 +539,13 @@ void setField(::OGRFeature &feature, int i
     defn->SetGeomType(type(feature.type()));
 
     std::unique_ptr< ::OGRFeature> of;
+    
+    LOG(info1) << "New feature.";
 
     if (!ds_.noFields_) {
         // get tag count and make even if odd
         auto tagCount(feature.tags_size());
+        LOG(info1) << "Tag count: " << tagCount;        
         if (tagCount & 0x1) { --tagCount; }
 
         int idField(-1);
@@ -556,6 +559,7 @@ void setField(::OGRFeature &feature, int i
             if ((keyIndex >= std::size_t(layer_.keys_size()))
                 || (valueIndex >= std::size_t(layer_.values_size()))) {
                 // key or value index out of bounds, ignore this attribute
+                LOG(warn1) << "\tField skipped.";
                 continue;
             }
 
@@ -565,9 +569,22 @@ void setField(::OGRFeature &feature, int i
             ::OGRFieldDefn def(name.c_str(), ogrType(value));
             def.SetSubType(ogrSubType(value));
             defn->AddFieldDefn(&def);
+            
+            LOG(info1) << "\tNew field def: " << name;
 
             // "id" -> remember field id
             if (name == "id") { idField = i / 2; }
+        }
+        
+        // horrible hack
+        if (feature.has_id()) {
+        
+            /* explanation: for some very obscure reason, the new 'mvt_id'
+               field from openmaptiles schema never appears in the output.
+               since it happens to be used as an id field, we inject it as 'id_'
+               field into output to make it accessible in the field list. */
+            auto def(::OGRFieldDefn("id_", ::OGRFieldType::OFTInteger64));
+            defn->AddFieldDefn(& def);
         }
 
         // create feature
@@ -596,6 +613,13 @@ void setField(::OGRFeature &feature, int i
             const auto &value(layer_.values(valueIndex));
             setField(*of, fid, value, (fid == idField));
         }
+        
+        // horrible hack, cont'd
+        if (feature.has_id()) {
+            of->SetField(fid, GIntBig(feature.id()));
+        }
+        
+        
     } else {
         of = std::unique_ptr< ::OGRFeature>(new ::OGRFeature(defn));
     }
