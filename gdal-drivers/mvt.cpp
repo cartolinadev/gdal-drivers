@@ -576,17 +576,6 @@ void setField(::OGRFeature &feature, int i
             if (name == "id") { idField = i / 2; }
         }
         
-        // horrible hack
-        if (feature.has_id()) {
-        
-            /* explanation: for some very obscure reason, the new 'mvt_id'
-               field from openmaptiles schema never appears in the output.
-               since it happens to be used as an id field, we inject it as 'id_'
-               field into output to make it accessible in the field list. */
-            auto def(::OGRFieldDefn("id_", ::OGRFieldType::OFTInteger64));
-            defn->AddFieldDefn(& def);
-        }
-
         // create feature
         of = std::unique_ptr< ::OGRFeature>(new ::OGRFeature(defn));
 
@@ -613,12 +602,6 @@ void setField(::OGRFeature &feature, int i
             const auto &value(layer_.values(valueIndex));
             setField(*of, fid, value, (fid == idField));
         }
-        
-        // horrible hack, cont'd
-        if (feature.has_id()) {
-            of->SetField(fid, GIntBig(feature.id()));
-        }
-        
         
     } else {
         of = std::unique_ptr< ::OGRFeature>(new ::OGRFeature(defn));
