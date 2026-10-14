@@ -540,12 +540,12 @@ void setField(::OGRFeature &feature, int i
 
     std::unique_ptr< ::OGRFeature> of;
     
-    LOG(info1) << "New feature.";
+    // LOG(debug) << "New feature.";
 
     if (!ds_.noFields_) {
         // get tag count and make even if odd
         auto tagCount(feature.tags_size());
-        LOG(info1) << "Tag count: " << tagCount;        
+        // LOG(debug) << "Tag count: " << tagCount;        
         if (tagCount & 0x1) { --tagCount; }
 
         int idField(-1);
@@ -570,7 +570,7 @@ void setField(::OGRFeature &feature, int i
             def.SetSubType(ogrSubType(value));
             defn->AddFieldDefn(&def);
             
-            LOG(info1) << "\tNew field def: " << name;
+            // LOG(debug) << "\tNew field def: " << name;
 
             // "id" -> remember field id
             if (name == "id") { idField = i / 2; }
